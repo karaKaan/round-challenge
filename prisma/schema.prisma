@@ -27,6 +27,9 @@ model Account {
     user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
     refresh_token_expires_in Int?
 
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
     @@unique([provider, providerAccountId])
 }
 
@@ -36,16 +39,23 @@ model Session {
     userId       String
     expires      DateTime
     user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model User {
-    id            String    @id @default(uuid())
+    id            String        @id @default(uuid())
     name          String?
-    email         String?   @unique
+    email         String?       @unique
     emailVerified DateTime?
     image         String?
+    bankAccounts  BankAccount[]
     accounts      Account[]
     sessions      Session[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model VerificationToken {
@@ -53,5 +63,36 @@ model VerificationToken {
     token      String   @unique
     expires    DateTime
 
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
     @@unique([identifier, token])
+}
+
+model BankAccount {
+    id        String @id @default(uuid())
+    accountId String @unique
+    name      String
+    mask      String
+    type      String
+    subtype   String
+
+    user              User?            @relation(fields: [userId], references: [id])
+    userId            String?          @unique
+    bankInstitution   BankInstitution? @relation(fields: [bankInstitutionId], references: [id])
+    bankInstitutionId String           @unique
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model BankInstitution {
+    id            String @id @default(uuid())
+    institutionId String @unique
+    name          String
+
+    bankAccount BankAccount?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
