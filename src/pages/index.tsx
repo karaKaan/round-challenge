@@ -5,7 +5,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/server/auth";
 import { type GetServerSideProps } from "next";
 import { api } from "@/utils/api";
-import { usePlaidLink } from "react-plaid-link";
+import {
+  type PlaidLinkOnSuccessMetadata,
+  usePlaidLink,
+} from "react-plaid-link";
 import { useCallback, useEffect, useState } from "react";
 import { on } from "events";
 
@@ -19,9 +22,14 @@ export default function Home() {
     api.bank.exchangePublicToken.useMutation();
   const config = {
     token: linkToken,
-    onSuccess: (publicToken: string, metadata: unknown) => {
+    onSuccess: (publicToken: string, metadata: PlaidLinkOnSuccessMetadata) => {
       console.log({ publicToken, metadata });
-      exchangePublicToken({ publicToken });
+      exchangePublicToken({
+        publicToken,
+        accounts: metadata.accounts,
+        institutionId: metadata.institution?.institution_id,
+        institutionName: metadata.institution?.name,
+      });
     },
     onExit: (err: unknown, metadata: unknown) => {
       console.log({ err, metadata });
@@ -53,7 +61,6 @@ export default function Home() {
         <Button
           onClick={handleLinkBankAccount}
           leftSection={<IconPlus size={"1.1rem"} />}
-          disabled={!ready}
         >
           Link bank account
         </Button>

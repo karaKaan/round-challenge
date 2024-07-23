@@ -46,6 +46,7 @@ model Session {
 
 model User {
     id            String        @id @default(uuid())
+    accessToken   String?       @unique
     name          String?
     email         String?       @unique
     emailVerified DateTime?
@@ -78,20 +79,20 @@ model BankAccount {
     subtype   String
 
     user              User?            @relation(fields: [userId], references: [id])
-    userId            String?          @unique
+    userId            String?
     bankInstitution   BankInstitution? @relation(fields: [bankInstitutionId], references: [id])
-    bankInstitutionId String           @unique
+    bankInstitutionId String?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
 
 model BankInstitution {
-    id            String @id @default(uuid())
-    institutionId String @unique
-    name          String
+    id            String  @id @default(uuid())
+    institutionId String? @unique
+    name          String?
 
-    bankAccount BankAccount?
+    BankAccount BankAccount[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
