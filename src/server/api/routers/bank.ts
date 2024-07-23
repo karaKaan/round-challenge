@@ -7,9 +7,6 @@ import {
 } from "@/server/api/trpc";
 import { CountryCode, Products } from "plaid";
 
-// For now I will be using publicProcedure because I won't be using authentication.
-// Of course this introduces vulnarabilities and should be avoided in production.
-
 export const bankRouter = createTRPCRouter({
   hello: publicProcedure
     .input(z.object({ text: z.string() }))
@@ -19,14 +16,18 @@ export const bankRouter = createTRPCRouter({
       };
     }),
 
-  createLinkToken: publicProcedure.mutation(async ({ ctx, input }) => {
+  createLinkToken: protectedProcedure.mutation(async ({ ctx, input }) => {
+    if (!ctx.session) throw new Error("No session found");
+
     const linkToken = await ctx.plaidClient.linkTokenCreate({
-      user: { client_user_id: "dsfsdf" },
+      user: { client_user_id: ctx.session.user.id },
       client_name: "Round Challenge",
       products: [Products.Auth, Products.Transactions],
       country_codes: [CountryCode.De],
       language: "en",
     });
+
+    console.log(linkToken);
 
     return {};
   }),
