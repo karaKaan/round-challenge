@@ -15,6 +15,7 @@ import { ZodError } from "zod";
 
 import { getServerAuthSession } from "@/server/auth";
 import { db } from "@/server/db";
+import { plaidClient } from "@/utils/plaid";
 
 /**
  * 1. CONTEXT
@@ -42,6 +43,7 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     session: opts.session,
     db,
+    plaidClient: plaidClient,
   };
 };
 
