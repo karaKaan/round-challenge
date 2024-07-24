@@ -1,8 +1,8 @@
-import { Text } from "@mantine/core";
+import { Menu, Text } from "@mantine/core";
 import { IconDots, IconDotsCircleHorizontal } from "@tabler/icons-react";
-import React from "react";
+import React, { useState } from "react";
 
-type Props = {
+type AccountCardProps = {
   account: {
     accountId?: string | null;
     bankName?: string | null;
@@ -11,10 +11,16 @@ type Props = {
     name?: string | null;
     mask?: string | null;
   };
-  onOptionClick?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 };
 
-export const AccountCard = ({ account, onOptionClick }: Props) => {
+export const AccountCard = ({
+  account,
+  onEdit,
+  onDelete,
+}: AccountCardProps) => {
+  const [opened, setOpened] = useState(false);
   return (
     <div
       key={account.accountId}
@@ -27,12 +33,20 @@ export const AccountCard = ({ account, onOptionClick }: Props) => {
       <Text className="text-xs font-bold text-black/50">
         {account.name} (**{account.mask})
       </Text>
-      {onOptionClick && (
-        <IconDots
-          className="ml-auto cursor-pointer rounded-full p-[.125rem] text-black/80 transition hover:bg-stone-300 hover:shadow active:translate-y-[1px]"
-          onClick={onOptionClick}
-        />
-      )}
+
+      <Menu opened={opened} onChange={setOpened}>
+        <Menu.Target>
+          <IconDots
+            className={`ml-auto cursor-pointer rounded-full p-[.125rem] text-black/80 transition hover:bg-stone-300 hover:shadow active:translate-y-[1px] ${opened && "bg-stone-300"}`}
+          />
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Item onClick={onEdit}>Edit</Menu.Item>
+          <Menu.Item onClick={onDelete} className="font-bold text-red-500">
+            Delete
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
     </div>
   );
 };
