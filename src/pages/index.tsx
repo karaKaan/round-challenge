@@ -82,13 +82,11 @@ export default function Home({ linkToken }: Props) {
       console.log({ err, metadata });
     },
   };
-  console.log(data);
   const { open, ready } = usePlaidLink(config);
 
   const handleLinkBankAccount = () => {
     open();
   };
-  console.log(ready);
 
   return (
     <AppShell>
@@ -140,9 +138,6 @@ export default function Home({ linkToken }: Props) {
                 <AccountCard
                   key={account.accountId}
                   account={account}
-                  onOptionClick={() => {
-                    console.log();
-                  }}
                 />
               ))}
               <LinkBankAccountCard

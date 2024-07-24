@@ -104,8 +104,8 @@ export const bankRouter = createTRPCRouter({
         );
 
         return { status: "success" };
-      } catch (err) {
-        console.log(err);
+      } catch (error) {
+        console.log(error);
       }
     }),
   getAccounts: protectedProcedure.query(async ({ ctx }) => {

@@ -20,7 +20,6 @@ const MyApp: AppType<{ session: Session | null }> = ({
     onSuccess: (data) => setLinkToken(data?.linkToken ?? null),
     onError: (error) => console.error(error),
   });
-  console.log({ linkToken });
   useEffect(() => {
     mutate();
   }, []);
