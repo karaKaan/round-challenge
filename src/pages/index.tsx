@@ -29,13 +29,13 @@ import { AccountCard } from "@/components/Card/AccountCard/AccountCard";
 import { LinkBankAccountCard } from "@/components/Card/LinkBankAccountCard/LinkBankAccountCard";
 import { CardWithGraph } from "@/components/Card/CardWithGraph/CardWithGraph";
 import dayjs from "dayjs";
-import { useDisclosure } from "@mantine/hooks";
 
-export default function Home() {
+type Props = {
+  linkToken: string;
+};
+
+export default function Home({ linkToken }: Props) {
   const queryClient = useQueryClient();
-  const [visible, { toggle }] = useDisclosure(false);
-
-  const [linkToken, setLinkToken] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
     null,
     null,
@@ -43,10 +43,6 @@ export default function Home() {
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
     null,
   );
-  const { mutate } = api.bank.createLinkToken.useMutation({
-    onSuccess: (data) => setLinkToken(data?.linkToken ?? null),
-    onError: (error) => console.error(error),
-  });
   const { mutate: exchangePublicToken } =
     api.bank.exchangePublicToken.useMutation();
 
@@ -65,11 +61,10 @@ export default function Home() {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     queryClient.invalidateQueries("getTransactions");
   }, [selectedAccountId, dateRange, queryClient]);
-  
+
   const config = {
     token: linkToken,
     onSuccess: (publicToken: string, metadata: PlaidLinkOnSuccessMetadata) => {
-      console.log({ publicToken, metadata });
       exchangePublicToken({
         publicToken,
         accounts: metadata.accounts,
@@ -83,18 +78,11 @@ export default function Home() {
   };
 
   const { open, ready } = usePlaidLink(config);
-  const generateToken = async () => {
-    mutate();
-  };
 
-  const handleLinkBankAccount = async () => {
-    if (linkToken) {
-      open();
-    } else {
-      await generateToken();
-      await open();
-    }
+  const handleLinkBankAccount = () => {
+    open();
   };
+  console.log(ready);
 
   return (
     <AppShell>
@@ -115,6 +103,7 @@ export default function Home() {
 
           <Button
             onClick={handleLinkBankAccount}
+            disabled={!ready}
             leftSection={<IconPlus size={"1.1rem"} />}
           >
             Link bank account
