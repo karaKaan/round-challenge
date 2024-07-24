@@ -42,6 +42,7 @@ Reading through the plaid docs, I noticed that they offer many webhook to listen
 6. Implement User settings, permissions
 7. Each Account can be deleted.
 8. Each Account can be edited, for example a custom name.
+9. Add Credentials login
 
 
 
