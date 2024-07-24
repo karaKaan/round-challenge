@@ -3,6 +3,7 @@ import {
   Button,
   Flex,
   Group,
+  LoadingOverlay,
   Select,
   Skeleton,
   Table,
@@ -28,9 +29,12 @@ import { AccountCard } from "@/components/Card/AccountCard/AccountCard";
 import { LinkBankAccountCard } from "@/components/Card/LinkBankAccountCard/LinkBankAccountCard";
 import { CardWithGraph } from "@/components/Card/CardWithGraph/CardWithGraph";
 import dayjs from "dayjs";
+import { useDisclosure } from "@mantine/hooks";
 
 export default function Home() {
   const queryClient = useQueryClient();
+  const [visible, { toggle }] = useDisclosure(false);
+
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
     null,
@@ -46,9 +50,9 @@ export default function Home() {
   const { mutate: exchangePublicToken } =
     api.bank.exchangePublicToken.useMutation();
 
-  const { data } = api.bank.getTotalAccountBalance.useQuery();
+  const { data, isFetching } = api.bank.getTotalAccountBalance.useQuery();
 
-  const { data: getTransactions, isFetching } =
+  const { data: getTransactions, isFetching: transactionIsFetching } =
     api.bank.getTransactions.useQuery({
       accountId: selectedAccountId,
       startDate: dateRange[0]?.toString(),
@@ -61,6 +65,7 @@ export default function Home() {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     queryClient.invalidateQueries("getTransactions");
   }, [selectedAccountId, dateRange, queryClient]);
+  
   const config = {
     token: linkToken,
     onSuccess: (publicToken: string, metadata: PlaidLinkOnSuccessMetadata) => {
@@ -93,154 +98,156 @@ export default function Home() {
 
   return (
     <AppShell>
-      <Flex align={"center"} justify={"space-between"} className="pb-10">
-        <Flex direction={"column"}>
-          <Title>Accounts</Title>
-          <Text c="dimmed">Add or manage your linked bank accounts</Text>
-        </Flex>
-
-        <Button
-          onClick={handleLinkBankAccount}
-          leftSection={<IconPlus size={"1.1rem"} />}
-        >
-          Link bank account
-        </Button>
-      </Flex>
-      <Box className="pb-5">
-        <Text className="font-bold text-black/80">
-          Total account balance ({data?.accounts.length} accounts)
-        </Text>
-        <Text className="text-2xl font-bold">
-          {data?.accounts &&
-            calculateTotalBalance({
-              accountBalances: data.accounts.map((account) => {
-                return {
-                  currentBalance: account.currentBalance ?? 0,
-                  isoCurrencyCode: account.isoCurrencyCode ?? "",
-                };
-              }),
-              isoCurrencyCode: "EUR",
-            })}{" "}
-          EUR
-        </Text>
-      </Box>
-      <Flex gap={"lg"} className="mb-5">
-        {data?.accounts?.map((account) => (
-          <AccountCard key={account.accountId} account={account} />
-        ))}
-        <LinkBankAccountCard
-          onClick={handleLinkBankAccount}
-          icon={<IconPlus size={"1rem"} />}
-          title="Link bank account"
-          text="Click to link another bank account"
-        />
-      </Flex>
-
-      <Group grow className="mb-5">
-        {getMonthlyIncomeAndSpend?.runway && (
-          <CardWithGraph
-            title="Runway & Cash Zero"
-            text={formatRunway(getMonthlyIncomeAndSpend.runway)}
-            subText={dayjs()
-              .add(getMonthlyIncomeAndSpend.runway, "month")
-              .format("D MMM YYYY")}
+      <div className="relative">
+        {isFetching && (
+          <LoadingOverlay
+            visible={true}
+            zIndex={1000}
+            overlayProps={{ radius: "sm", blur: 8 }}
           />
         )}
-        <CardWithGraph
-          title="Monthly Spend"
-          text={`${getMonthlyIncomeAndSpend?.totalSpend} EUR`}
-          subText="10% from last month"
-          img={{ src: "/sampleBarChart.svg", alt: "Sample alt text" }}
-        />
-        <CardWithGraph
-          title="Monthly Income"
-          text={`${getMonthlyIncomeAndSpend?.totalIncome} EUR`}
-          subText="10% from last month"
-          img={{ src: "/sampleBarChart.svg", alt: "Sample alt text" }}
-        />
-      </Group>
-      <div className="rounded-lg bg-stone-200 p-3">
-        <Flex className="mb-4 gap-2">
-          <DatePickerInput
-            type="range"
-            label="Date"
-            clearable
-            placeholder="Pick a Date"
-            leftSection={<IconCalendar size={"1rem"} />}
-            value={dateRange}
-            onChange={(data) => {
-              setDateRange(data);
-            }}
-          />
-          <Select
-            data={data?.accounts.map((account) => {
-              return {
-                label: account.name ?? "",
-                value: account.accountId ?? "",
-              };
-            })}
-            clearable
-            leftSection={<IconCreditCard size={"1rem"} />}
-            label="Account"
-            placeholder="Choose your Account"
-            value={selectedAccountId}
-            onChange={setSelectedAccountId}
+
+        <Flex align={"center"} justify={"space-between"} className="pb-10">
+          <Flex direction={"column"}>
+            <Title>Accounts</Title>
+            <Text c="dimmed">Add or manage your linked bank accounts</Text>
+          </Flex>
+
+          <Button
+            onClick={handleLinkBankAccount}
+            leftSection={<IconPlus size={"1.1rem"} />}
+          >
+            Link bank account
+          </Button>
+        </Flex>
+        <Box className="pb-5">
+          <Text className="font-bold text-black/80">
+            Total account balance ({data?.accounts.length} accounts)
+          </Text>
+          <Text className="text-2xl font-bold">
+            {data?.accounts &&
+              calculateTotalBalance({
+                accountBalances: data.accounts.map((account) => {
+                  return {
+                    currentBalance: account.currentBalance ?? 0,
+                    isoCurrencyCode: account.isoCurrencyCode ?? "",
+                  };
+                }),
+                isoCurrencyCode: "EUR",
+              })}{" "}
+            EUR
+          </Text>
+        </Box>
+        <Flex gap={"lg"} className="mb-5">
+          {data?.accounts?.map((account) => (
+            <AccountCard
+              key={account.accountId}
+              account={account}
+              onOptionClick={() => {
+                console.log();
+              }}
+            />
+          ))}
+          <LinkBankAccountCard
+            onClick={handleLinkBankAccount}
+            icon={<IconPlus size={"1rem"} />}
+            title="Link bank account"
+            text="Click to link another bank account"
           />
         </Flex>
-        <Table
-          data={{
-            head: [
-              "Date",
-              "To/From",
-              "Amount",
-              "Payment Method",
-              "Bank",
-              "Account",
-            ],
-            body: isFetching
-              ? [
-                  [
-                    <Skeleton key={1} height={20} />,
-                    <Skeleton key={1} height={20} />,
-                    <Skeleton key={1} height={20} />,
-                    <Skeleton key={1} height={20} />,
-                    <Skeleton key={1} height={20} />,
-                    <Skeleton key={1} height={20} />,
-                  ],
-                  [
-                    <Skeleton key={1} height={20} />,
-                    <Skeleton key={1} height={20} />,
-                    <Skeleton key={1} height={20} />,
-                    <Skeleton key={1} height={20} />,
-                    <Skeleton key={1} height={20} />,
-                    <Skeleton key={1} height={20} />,
-                  ],
-                  [
-                    <Skeleton key={1} height={20} />,
-                    <Skeleton key={1} height={20} />,
-                    <Skeleton key={1} height={20} />,
-                    <Skeleton key={1} height={20} />,
-                    <Skeleton key={1} height={20} />,
-                    <Skeleton key={1} height={20} />,
-                  ],
-                ]
-              : getTransactions,
-          }}
-        >
-          {/* <Table.Thead>
-          <Table.Tr>
-            <Table.Th>Date</Table.Th>
-            <Table.Th>To/From</Table.Th>
-            <Table.Th>Amount</Table.Th>
-            <Table.Th>Payment Method</Table.Th>
-            <Table.Th>Bank</Table.Th>
-            <Table.Th>Account</Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          {getTransactions}
-        </Table.Tbody> */}
-        </Table>
+
+        <Group grow className="mb-5">
+          {getMonthlyIncomeAndSpend?.runway && (
+            <CardWithGraph
+              title="Runway & Cash Zero"
+              text={formatRunway(getMonthlyIncomeAndSpend.runway)}
+              subText={dayjs()
+                .add(getMonthlyIncomeAndSpend.runway, "month")
+                .format("D MMM YYYY")}
+            />
+          )}
+          <CardWithGraph
+            title="Monthly Spend"
+            text={`${getMonthlyIncomeAndSpend?.totalSpend} EUR`}
+            subText="10% from last month"
+            img={{ src: "/sampleBarChart.svg", alt: "Sample alt text" }}
+          />
+          <CardWithGraph
+            title="Monthly Income"
+            text={`${getMonthlyIncomeAndSpend?.totalIncome} EUR`}
+            subText="10% from last month"
+            img={{ src: "/sampleBarChart.svg", alt: "Sample alt text" }}
+          />
+        </Group>
+        <div className="rounded-lg bg-stone-200 p-3">
+          <Flex className="mb-4 gap-2">
+            <DatePickerInput
+              type="range"
+              label="Date"
+              clearable
+              placeholder="Pick a Date"
+              leftSection={<IconCalendar size={"1rem"} />}
+              value={dateRange}
+              onChange={(data) => {
+                setDateRange(data);
+              }}
+            />
+            <Select
+              data={data?.accounts.map((account) => {
+                return {
+                  label: account.name ?? "",
+                  value: account.accountId ?? "",
+                };
+              })}
+              clearable
+              leftSection={<IconCreditCard size={"1rem"} />}
+              label="Account"
+              placeholder="Choose your Account"
+              value={selectedAccountId}
+              onChange={setSelectedAccountId}
+            />
+          </Flex>
+          <Table
+            data={{
+              head: [
+                "Date",
+                "To/From",
+                "Amount",
+                "Payment Method",
+                "Bank",
+                "Account",
+              ],
+              body: transactionIsFetching
+                ? [
+                    [
+                      <Skeleton key={1} height={20} />,
+                      <Skeleton key={1} height={20} />,
+                      <Skeleton key={1} height={20} />,
+                      <Skeleton key={1} height={20} />,
+                      <Skeleton key={1} height={20} />,
+                      <Skeleton key={1} height={20} />,
+                    ],
+                    [
+                      <Skeleton key={1} height={20} />,
+                      <Skeleton key={1} height={20} />,
+                      <Skeleton key={1} height={20} />,
+                      <Skeleton key={1} height={20} />,
+                      <Skeleton key={1} height={20} />,
+                      <Skeleton key={1} height={20} />,
+                    ],
+                    [
+                      <Skeleton key={1} height={20} />,
+                      <Skeleton key={1} height={20} />,
+                      <Skeleton key={1} height={20} />,
+                      <Skeleton key={1} height={20} />,
+                      <Skeleton key={1} height={20} />,
+                      <Skeleton key={1} height={20} />,
+                    ],
+                  ]
+                : getTransactions,
+            }}
+          ></Table>
+        </div>
       </div>
     </AppShell>
   );

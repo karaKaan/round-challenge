@@ -11,9 +11,10 @@ type Props = {
     name?: string | null;
     mask?: string | null;
   };
+  onOptionClick?: () => void;
 };
 
-export const AccountCard = ({ account }: Props) => {
+export const AccountCard = ({ account, onOptionClick }: Props) => {
   return (
     <div
       key={account.accountId}
@@ -26,6 +27,12 @@ export const AccountCard = ({ account }: Props) => {
       <Text className="text-xs font-bold text-black/50">
         {account.name} (**{account.mask})
       </Text>
+      {onOptionClick && (
+        <IconDots
+          className="ml-auto cursor-pointer rounded-full p-[.125rem] text-black/80 transition hover:bg-stone-300 hover:shadow active:translate-y-[1px]"
+          onClick={onOptionClick}
+        />
+      )}
     </div>
   );
 };
