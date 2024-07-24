@@ -46,7 +46,7 @@ export default function Home({ linkToken }: Props) {
   const { mutate: exchangePublicToken } =
     api.bank.exchangePublicToken.useMutation();
 
-  const { data, isFetching } = api.bank.getTotalAccountBalance.useQuery();
+  const { data, isLoading } = api.bank.getTotalAccountBalance.useQuery();
 
   const { data: getTransactions, isFetching: transactionIsFetching } =
     api.bank.getTransactions.useQuery({
@@ -87,7 +87,7 @@ export default function Home({ linkToken }: Props) {
   return (
     <AppShell>
       <div className="relative">
-        {isFetching && (
+        {isLoading && (
           <LoadingOverlay
             visible={true}
             zIndex={1000}
@@ -235,7 +235,7 @@ export default function Home({ linkToken }: Props) {
                   ]
                 : getTransactions,
             }}
-          ></Table>
+          />
         </div>
       </div>
     </AppShell>
@@ -244,7 +244,6 @@ export default function Home({ linkToken }: Props) {
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const session = await getServerSession(context.req, context.res, authOptions);
-  console.log(session);
   if (!session) {
     return {
       redirect: {
