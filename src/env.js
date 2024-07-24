@@ -26,6 +26,8 @@ export const env = createEnv({
     GOOGLE_CLIENT_SECRET: z.string(),
     PLAID_CLIENT_ID: z.string(),
     PLAID_SECRET: z.string(),
+    SECRET_KEY: z.string(),
+    IV: z.string(),
   },
 
   /**
@@ -50,6 +52,8 @@ export const env = createEnv({
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     PLAID_CLIENT_ID: process.env.PLAID_CLIENT_ID,
     PLAID_SECRET: process.env.PLAID_SECRET,
+    SECRET_KEY: process.env.SECRET_KEY,
+    IV: process.env.IV,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

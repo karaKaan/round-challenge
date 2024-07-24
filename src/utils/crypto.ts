@@ -1,8 +1,9 @@
+import { env } from "@/env";
 import crypto from "crypto";
 
 const ALGORITHM = "aes-256-cbc";
-const SECRET_KEY = crypto.randomBytes(32);
-const IV = crypto.randomBytes(16);
+const SECRET_KEY = Buffer.from(env.SECRET_KEY, "hex");
+const IV = Buffer.from(env.IV, "hex");
 
 export const encrypt = (text: string) => {
   const cipher = crypto.createCipheriv(ALGORITHM, SECRET_KEY, IV);

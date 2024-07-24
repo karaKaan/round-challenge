@@ -1,7 +1,12 @@
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { decrypt, encrypt } from "@/utils/crypto";
+import { plaidClient } from "@/utils/plaid";
 import { CountryCode, Products } from "plaid";
 import { z } from "zod";
+import dayjs from "dayjs";
+import BigNumber from "bignumber.js";
+
+const DATE_FORMAT = "YYYY-MM-DD";
 
 export const bankRouter = createTRPCRouter({
   createLinkToken: protectedProcedure.mutation(async ({ ctx }) => {
@@ -103,4 +108,170 @@ export const bankRouter = createTRPCRouter({
         console.log(err);
       }
     }),
+  getTotalAccountBalance: protectedProcedure.query(async ({ ctx }) => {
+    const user = await ctx.db.user.findUnique({
+      include: { bankAccounts: { include: { bankInstitution: true } } },
+      where: { id: ctx.session.user.id },
+    });
+    if (!user?.accessToken) return;
+
+    const accessToken = decrypt(user.accessToken);
+
+    if (!accessToken) return;
+
+    const { data } = await plaidClient.accountsBalanceGet({
+      access_token: accessToken,
+      options: {
+        account_ids: user.bankAccounts.map((account) => account.accountId),
+      },
+    });
+
+    const accounts = data.accounts.map((account) => {
+      const storedAccount = user.bankAccounts.find(
+        (bankAccount) => bankAccount.accountId === account.account_id,
+      );
+
+      return {
+        accountId: storedAccount?.accountId,
+        bankName: storedAccount?.bankInstitution?.name,
+        name: storedAccount?.name,
+        mask: storedAccount?.mask,
+        type: storedAccount?.type,
+        subtype: storedAccount?.subtype,
+        currentBalance: account.balances.current,
+        isoCurrencyCode: account.balances.iso_currency_code,
+      };
+    });
+
+    return { accounts };
+  }),
+
+  getTransactions: protectedProcedure
+    .input(
+      z
+        .object({
+          startDate: z.string().nullish(),
+          endDate: z.string().nullish(),
+          accountId: z.string().nullish(),
+        })
+        .nullish(),
+    )
+    .query(async ({ ctx, input }) => {
+      const user = await ctx.db.user.findUnique({
+        include: { bankAccounts: { include: { bankInstitution: true } } },
+        where: { id: ctx.session.user.id },
+      });
+      if (!user?.accessToken) return;
+
+      const accessToken = decrypt(user.accessToken);
+
+      if (!accessToken) return;
+
+      const startDate = input?.startDate
+        ? dayjs(input.startDate).format(DATE_FORMAT)
+        : dayjs(new Date()).subtract(1, "month").format(DATE_FORMAT);
+
+      const endDate = input?.endDate
+        ? dayjs(input.endDate).format(DATE_FORMAT)
+        : dayjs(new Date()).format(DATE_FORMAT);
+
+      const transactions = await plaidClient.transactionsGet({
+        access_token: accessToken,
+        start_date: startDate,
+        end_date: endDate,
+        options: {
+          account_ids: input?.accountId
+            ? [input.accountId]
+            : user.bankAccounts.map((account) => account.accountId),
+        },
+      });
+      const transactionsFormatted: (string | number | null | undefined)[][] =
+        [];
+
+      transactions.data.transactions.forEach((transaction) => {
+        const date = dayjs(transaction.date).format("DD MMM YYYY");
+        const toFrom = transaction.name;
+        /**
+         * The amount from the response of plaidApi returns a
+         * positive amount and a negative amount.
+         * The positive amount means that the account was charged.
+         * The negative amount means that the account was credited.
+         *
+         * For better user experience we switch it with multiplying it by -1.
+         * So that minus actually means minus and plus means plus.
+         */
+        const amountWithIsoCurrencyCode = `${new BigNumber(transaction.amount).times(-1).toNumber()} ${transaction.iso_currency_code}`;
+        const paymentMethod = transaction.payment_channel;
+
+        const findAccount = user.bankAccounts.find(
+          (account) => account.accountId === transaction.account_id,
+        );
+
+        const bank = findAccount?.bankInstitution?.name;
+        const account = `${findAccount?.name} (**${findAccount?.mask})`;
+
+        transactionsFormatted.push([
+          date,
+          toFrom,
+          amountWithIsoCurrencyCode,
+          paymentMethod,
+          bank,
+          account,
+        ]);
+      });
+
+      return transactionsFormatted;
+    }),
+  getMonthlyIncomeAndSpend: protectedProcedure.query(async ({ ctx }) => {
+    const startDate = dayjs(new Date()).startOf("month").format(DATE_FORMAT);
+    const endDate = dayjs(new Date()).endOf("month").format(DATE_FORMAT);
+    const user = await ctx.db.user.findUnique({
+      include: { bankAccounts: { include: { bankInstitution: true } } },
+      where: { id: ctx.session.user.id },
+    });
+    if (!user?.accessToken) return;
+
+    const accessToken = decrypt(user.accessToken);
+
+    if (!accessToken) return;
+
+    const response = await plaidClient.transactionsGet({
+      access_token: accessToken,
+      start_date: startDate,
+      end_date: endDate,
+      options: {
+        account_ids: user.bankAccounts.map((account) => account.accountId),
+      },
+    });
+
+    let totalIncome = 0;
+    let totalSpend = 0;
+    let totalBalance = 0;
+
+    response.data.transactions.forEach((transaction) => {
+      if (transaction.amount < 0) {
+        totalIncome += Math.abs(transaction.amount);
+      } else {
+        totalSpend += transaction.amount;
+      }
+    });
+
+    const accountsResponse = await plaidClient.accountsGet({
+      access_token: accessToken,
+      options: {
+        account_ids: user.bankAccounts.map((account) => account.accountId),
+      },
+    });
+
+    accountsResponse.data.accounts.forEach((account) => {
+      totalBalance += account.balances.current ?? 0;
+    });
+
+    const runway =
+      totalSpend > 0
+        ? new BigNumber(totalBalance).dividedBy(totalSpend).toNumber()
+        : Infinity;
+
+    return { runway, totalIncome, totalSpend };
+  }),
 });
