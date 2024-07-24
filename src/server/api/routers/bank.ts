@@ -108,7 +108,7 @@ export const bankRouter = createTRPCRouter({
         console.log(err);
       }
     }),
-  getTotalAccountBalance: protectedProcedure.query(async ({ ctx }) => {
+  getAccounts: protectedProcedure.query(async ({ ctx }) => {
     try {
       const user = await ctx.db.user.findUnique({
         include: { bankAccounts: { include: { bankInstitution: true } } },
