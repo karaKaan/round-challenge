@@ -14,7 +14,7 @@ import {
   IconChevronRight,
   IconLayout2,
 } from "@tabler/icons-react";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 
 type AppShellProps = {
   children: ReactNode;
@@ -24,10 +24,7 @@ export const AppShell = ({ children }: AppShellProps) => {
   const session = useSession();
   const [opened, setOpened] = useState(false);
   return (
-    <MantineAppShell
-      navbar={{ width: 250, breakpoint: "sm" }}
-      padding={"md"}
-    >
+    <MantineAppShell navbar={{ width: 250, breakpoint: "sm" }} padding={"md"}>
       <MantineAppShell.Navbar p="lg">
         <Title className="mb-10 text-5xl font-black">Round.</Title>
         <div className="flex h-full flex-col justify-between">
@@ -59,7 +56,7 @@ export const AppShell = ({ children }: AppShellProps) => {
             <Menu.Target>
               <div className="flex cursor-pointer items-center gap-3">
                 <Avatar src={session.data?.user.image} />
-                <Text className="font-bold flex items-center justify-between w-full">
+                <Text className="flex w-full items-center justify-between font-bold">
                   {session.data?.user.name}
                   {opened ? (
                     <IconChevronLeft size={"1rem"} />
@@ -72,6 +69,9 @@ export const AppShell = ({ children }: AppShellProps) => {
             <Menu.Dropdown>
               <Menu.Label>General</Menu.Label>
               <Menu.Item>Settings</Menu.Item>
+              <Menu.Item onClick={() => signOut()} className="text-red-500">
+                Logout
+              </Menu.Item>
             </Menu.Dropdown>
           </Menu>
         </div>
