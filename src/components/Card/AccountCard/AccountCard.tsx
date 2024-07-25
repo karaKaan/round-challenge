@@ -1,5 +1,5 @@
 import { Menu, Text } from "@mantine/core";
-import { IconDots, IconDotsCircleHorizontal } from "@tabler/icons-react";
+import { IconDots } from "@tabler/icons-react";
 import React, { useState } from "react";
 
 type AccountCardProps = {

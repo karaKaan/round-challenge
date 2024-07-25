@@ -30,11 +30,11 @@ import { LinkBankAccountCard } from "@/components/Card/LinkBankAccountCard/LinkB
 import { CardWithGraph } from "@/components/Card/CardWithGraph/CardWithGraph";
 import dayjs from "dayjs";
 
-type Props = {
+type HomeProps = {
   linkToken: string;
 };
 
-export default function Home({ linkToken }: Props) {
+export default function Home({ linkToken }: HomeProps) {
   const queryClient = useQueryClient();
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
     null,
@@ -50,7 +50,7 @@ export default function Home({ linkToken }: Props) {
       },
     });
 
-  const { data, isLoading, refetch } = api.bank.getAccounts.useQuery();
+  const { data, isLoading } = api.bank.getAccounts.useQuery();
 
   const { data: getTransactions, isFetching: transactionIsFetching } =
     api.bank.getTransactions.useQuery({
@@ -135,10 +135,7 @@ export default function Home({ linkToken }: Props) {
             </Box>
             <Flex gap={"lg"} className="mb-5">
               {data?.accounts?.map((account) => (
-                <AccountCard
-                  key={account.accountId}
-                  account={account}
-                />
+                <AccountCard key={account.accountId} account={account} />
               ))}
               <LinkBankAccountCard
                 onClick={handleLinkBankAccount}

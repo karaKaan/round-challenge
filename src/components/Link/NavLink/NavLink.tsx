@@ -2,13 +2,13 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ReactNode } from "react";
 
-type Props = {
+type NavLinkProps = {
   text: string;
   href: string;
   leftSection?: ReactNode;
 };
 
-export const NavLink = ({ text, href, leftSection }: Props) => {
+export const NavLink = ({ text, href, leftSection }: NavLinkProps) => {
   const router = useRouter();
   return (
     <Link

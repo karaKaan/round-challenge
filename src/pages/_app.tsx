@@ -22,7 +22,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
   });
   useEffect(() => {
     mutate();
-  }, []);
+  }, [mutate]);
 
   return (
     <SessionProvider session={session}>

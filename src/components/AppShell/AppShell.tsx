@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from "react";
 import {
   Avatar,
-  Flex,
   AppShell as MantineAppShell,
   Menu,
   Text,
@@ -9,7 +8,6 @@ import {
 } from "@mantine/core";
 import { NavLink } from "../Link/NavLink/NavLink";
 import {
-  IconApps,
   IconBriefcase,
   IconChartCandle,
   IconChevronLeft,
@@ -18,20 +16,18 @@ import {
 } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 
-type Props = {
+type AppShellProps = {
   children: ReactNode;
 };
 
-export const AppShell = ({ children }: Props) => {
+export const AppShell = ({ children }: AppShellProps) => {
   const session = useSession();
   const [opened, setOpened] = useState(false);
   return (
     <MantineAppShell
-      // header={{ height: 60 }}
       navbar={{ width: 250, breakpoint: "sm" }}
       padding={"md"}
     >
-      {/* <AppShell.Header>header</AppShell.Header> */}
       <MantineAppShell.Navbar p="lg">
         <Title className="mb-10 text-5xl font-black">Round.</Title>
         <div className="flex h-full flex-col justify-between">

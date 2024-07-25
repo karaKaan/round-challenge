@@ -1,15 +1,19 @@
 import { Text } from "@mantine/core";
-import { IconDots, IconDotsCircleHorizontal } from "@tabler/icons-react";
 import { type ReactNode } from "react";
 
-type Props = {
+type LinkBankAccountCardProps = {
   icon?: ReactNode;
   title: string;
   text: string;
   onClick?: () => void;
 };
 
-export const LinkBankAccountCard = ({ icon, title, text, onClick }: Props) => {
+export const LinkBankAccountCard = ({
+  icon,
+  title,
+  text,
+  onClick,
+}: LinkBankAccountCardProps) => {
   return (
     <div
       key={`${title}-${text}`}
