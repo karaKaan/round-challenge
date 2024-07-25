@@ -1,5 +1,9 @@
 Thanks for the opportunity it was a great Challenge and truly hands-on.
 
+[challenge.webm](https://github.com/user-attachments/assets/5a2913a1-f77b-4505-86b2-915be3a9fd9e)
+
+
+
 ### Shortcuts 
 1. Mobile-first approach not considered.
 
@@ -11,7 +15,7 @@ Thanks for the opportunity it was a great Challenge and truly hands-on.
 2. [x] API(s) to get transactions history for frontend
 3. [x] API(s) to get stats for frontend
 4. [x] A database schema to store needed information for bank accounts. Actual data can be mocked
-5. [] One workflow to keep local data in sync with the bank - to keep it synced every x hours, and generate the reports
+- [ ] One workflow to keep local data in sync with the bank - to keep it synced every x hours, and generate the reports
 6. [x] (Bonus) A super basic barebones dashboard page with the above mockup (in NextJS or React)
 7. [x] Lots of ideas on how you would build it right if you were to make it for real
 
@@ -22,7 +26,7 @@ I did all the expected tasks with bonus and for Nr. 7 I will elaborate more late
 I didn't understand quite the expectation, BUT I would love to explain you my approach. 
 
 ### The approach for Nr. 5
-I assume that the task is to sync the bank with our DB for x hours. This can be solved through cronjob. When we are using Vercel for our deployment, then we can use the [Vercel Cron Jobs](https://vercel.com/docs/cron-jobs) to ping one of our api route and handle the sync there.
+I assume that the task is to sync the bank with our DB for every x hours. This can be solved through cronjob. When we are using Vercel for our deployment, then we can use the [Vercel Cron Jobs](https://vercel.com/docs/cron-jobs) to ping one of our api route and handle the sync there.
 
 **Issue with this approach**
 
@@ -30,7 +34,7 @@ Checking, updating, and syncing the bank with each user in our database every x 
 
 **What is the Solution then?**
 
-Reading through the plaid docs, I noticed that they offer many webhook to listen too. This is way better then the cronjob, because we only change, when something is happening and only for a single user(the affected one).
+Reading through the plaid docs, I noticed that they offer many webhooks to listen too. This is way better then the cronjob, because we only change, when something is happening and only for a single user(the affected one).
 
 ### 7. Ideas
 
