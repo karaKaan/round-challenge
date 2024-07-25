@@ -5,6 +5,7 @@ import { CountryCode, Products } from "plaid";
 import { z } from "zod";
 import dayjs from "dayjs";
 import BigNumber from "bignumber.js";
+import { getAccessTokenWithUser } from "@/utils/getAccessTokenWithUser";
 
 const DATE_FORMAT = "YYYY-MM-DD";
 
@@ -68,7 +69,10 @@ export const bankRouter = createTRPCRouter({
             data: { accessToken: encryptedAccessToken },
           });
         }
-
+        /**
+         * Here we use the prisma transaction for bulk creation and edit.
+         * This approach is way faster and recommended than doing it in a loop.
+         */
         await ctx.db.$transaction(
           input.accounts.map((account) => {
             const institutionId = input.institutionId ?? undefined;
@@ -110,15 +114,11 @@ export const bankRouter = createTRPCRouter({
     }),
   getAccounts: protectedProcedure.query(async ({ ctx }) => {
     try {
-      const user = await ctx.db.user.findUnique({
-        include: { bankAccounts: { include: { bankInstitution: true } } },
-        where: { id: ctx.session.user.id },
+      const { accessToken, user } = await getAccessTokenWithUser({
+        db: ctx.db,
+        userId: ctx.session.user.id,
       });
-      if (!user?.accessToken) return;
 
-      const accessToken = decrypt(user.accessToken);
-
-      if (!accessToken) return;
       const { data } = await plaidClient.accountsBalanceGet({
         access_token: accessToken,
         options: {
@@ -161,15 +161,10 @@ export const bankRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       try {
-        const user = await ctx.db.user.findUnique({
-          include: { bankAccounts: { include: { bankInstitution: true } } },
-          where: { id: ctx.session.user.id },
+        const { accessToken, user } = await getAccessTokenWithUser({
+          db: ctx.db,
+          userId: ctx.session.user.id,
         });
-        if (!user?.accessToken) return;
-
-        const accessToken = decrypt(user.accessToken);
-
-        if (!accessToken) return;
 
         const startDate = input?.startDate
           ? dayjs(input.startDate).format(DATE_FORMAT)
@@ -233,15 +228,10 @@ export const bankRouter = createTRPCRouter({
     try {
       const startDate = dayjs(new Date()).startOf("month").format(DATE_FORMAT);
       const endDate = dayjs(new Date()).endOf("month").format(DATE_FORMAT);
-      const user = await ctx.db.user.findUnique({
-        include: { bankAccounts: { include: { bankInstitution: true } } },
-        where: { id: ctx.session.user.id },
+      const { accessToken, user } = await getAccessTokenWithUser({
+        db: ctx.db,
+        userId: ctx.session.user.id,
       });
-      if (!user?.accessToken) return;
-
-      const accessToken = decrypt(user.accessToken);
-
-      if (!accessToken) return;
 
       const response = await plaidClient.transactionsGet({
         access_token: accessToken,
